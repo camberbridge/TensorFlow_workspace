@@ -81,6 +81,7 @@ from tensorflow.models.rnn import seq2seq
 # from tensorflow.models.rnn.ptb import reader
 import reader_estimate
 import time
+import os
 
 import tensorflow.python.platform
 import datetime
@@ -314,6 +315,30 @@ def get_config():
     raise ValueError("Invalid model: %s", FLAGS.model)
 
 
+##########
+vocab = {}
+inv_vocab = {}
+
+
+def load_data(filename):
+  global vocab
+  global inv_vocab
+  words = open(filename).read().replace('\n', '<eos>').strip().split()
+  dataset = np.ndarray((len(words),), dtype=np.int32)
+  for i, word in enumerate(words):
+    if word not in vocab:
+      vocab[word] = len(vocab)
+      # 単語逆引き用辞書
+      inv_vocab[len(vocab) - 1] = word
+  dataset[i] = vocab[word]
+
+  print('#vocab =', len(vocab))
+  print(inv_vocab)
+
+  return dataset
+##########
+
+
 def main(unused_args):
   if not FLAGS.data_path:
     raise ValueError("Must set --data_path to PTB data directory")
@@ -328,6 +353,16 @@ def main(unused_args):
   eval_config = get_config()
   eval_config.batch_size = 1
   eval_config.num_steps = 1
+
+  train_path = os.path.join(FLAGS.data_path, "ptb.train.txt")
+  valid_path = os.path.join(FLAGS.data_path, "ptb.valid.txt")
+  test_path = os.path.join(FLAGS.data_path, "ptb.test.txt")
+
+  ##########
+  load_data(train_path)
+  load_data(valid_path)
+  load_data(test_path)
+  ##########
 
   with tf.Graph().as_default(), tf.Session() as session:
     initializer = tf.random_uniform_initializer(-config.init_scale,

@@ -45,6 +45,7 @@ def _read_words(filename):
     # Convert the new line to the End of String.
     return f.read().replace("\n", "<eos>").split()
 
+
 """
 # args: テキストファイル(訓練文書)
 # returns: 引数に与えた訓練文書内に存在する各単語を, そのファイル内での出現回数の多い順にソートし(この時文末の<EOS>も単語の一つとしてカウント), その出現頻度順位(0から始まる)を単語に付与したハッシュマップ. 要はText Frequency.
@@ -67,6 +68,7 @@ def _build_vocab(filename):
 
   return word_to_id
 
+
 """
 # Word to Vector
 # args: テキストファイル(評価文書), TextFrequencyを持つハッシュマップ.
@@ -78,10 +80,7 @@ def _file_to_word_ids(filename, word_to_id):
   # 入力した文書の各単語に対してその文書における出現回数を付与する. 返り値は, 語の並び順と出現回数の情報を持つ.
   return [word_to_id[word] for word in data]
 
-##########
-vocab = {}
-inv_vocab = {}
-##########
+
 def ptb_raw_data(data_path=None):
   """Load PTB raw data from data directory "data_path".
 
@@ -100,37 +99,6 @@ def ptb_raw_data(data_path=None):
   train_path = os.path.join(data_path, "ptb.train.txt")
   # valid_path = os.path.join(data_path, "ptb.valid.txt")
   test_path = os.path.join(data_path, "ptb.test.txt")
-
-  ##########
-  def load_data(filename):
-    global vocab
-    global inv_vocab
-    words = open(filename).read().replace('\n', '<eos>').strip().split()
-    dataset = np.ndarray((len(words),), dtype=np.int32)
-    for i, word in enumerate(words):
-      if word not in vocab:
-        vocab[word] = len(vocab)
-        # 単語逆引き用辞書
-        inv_vocab[len(vocab)-1]=word
-      dataset[i] = vocab[word]
-
-    print('#vocab =', len(vocab))
-    print (inv_vocab)
-
-    return dataset
-
-  load_data(test_path)
-  load_data(train_path)
-
-  # def load_data_train(f):
-  #   ff={}
-  #   data = _read_words(f)
-  #   for i, w in enumerate(data):
-  #     ff[str(i)] = str(w)
-  #   print (ff)
-  #
-  # load_data_train(train_path)
-  ##########
 
   # 訓練文書内の単語の出現頻度順に並び替えて, その順位を付与した辞書
   word_to_id = _build_vocab(train_path)
