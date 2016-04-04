@@ -82,6 +82,7 @@ from tensorflow.models.rnn import seq2seq
 import reader_estimate
 import time
 import os
+import six
 
 import tensorflow.python.platform
 import datetime
@@ -277,8 +278,13 @@ def run_epoch(session, m, data, eval_op, verbose=False):
   costs = 0.0
   iters = 0
   state = m.initial_state.eval()
+
   for step, (x, y) in enumerate(reader_estimate.ptb_iterator(data, m.batch_size,
                                                     m.num_steps)):
+
+    print ("==========")
+    print (inv_vocab[x[0][0]])
+
     # cost, state, _ = session.run([m.cost, m.final_state, eval_op],
     #                              {m.input_data: x,
     #                               m.targets: y,
@@ -289,9 +295,16 @@ def run_epoch(session, m, data, eval_op, verbose=False):
                                   m.initial_state: state})
 
     # 評価文書の文末の<EOS>を除いた単語の数だけ回す
-    print ("==========")
     print ("The length of proba[0]: ", len(proba[0]))
     print ("The best probability is ...", np.argmax(proba))
+    print (step, " 回")
+    prediction = list(zip(proba[0], inv_vocab.values()))
+    prediction.sort()
+    prediction.reverse()
+
+    for i, (score, word) in enumerate(prediction):
+      print('{},{}'.format(word, score))
+      if i >= 2: break
 
     costs += cost
     iters += m.num_steps
@@ -330,10 +343,7 @@ def load_data(filename):
       vocab[word] = len(vocab)
       # 単語逆引き用辞書
       inv_vocab[len(vocab) - 1] = word
-  dataset[i] = vocab[word]
-
-  print('#vocab =', len(vocab))
-  print(inv_vocab)
+    dataset[i] = vocab[word]
 
   return dataset
 ##########
@@ -361,7 +371,10 @@ def main(unused_args):
   ##########
   load_data(train_path)
   load_data(valid_path)
-  load_data(test_path)
+  testData = load_data(test_path)
+
+  print('#vocab =', len(vocab))
+  print(inv_vocab)
   ##########
 
   with tf.Graph().as_default(), tf.Session() as session:
@@ -396,7 +409,7 @@ def main(unused_args):
     """
     # Here. Give test_data a optional word vector
     """
-    test_perplexity = run_epoch(session, mtest, test_data, tf.no_op())
+    test_perplexity = run_epoch(session, mtest, testData, tf.no_op())
     print("\nTest Perplexity: %.3f" % test_perplexity)
 
 
